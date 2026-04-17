@@ -3,130 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>股票成本助手 V1.2 - 莫兰迪高级版</title>
+    <title>股票成本助手 V1.3</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#c0c7ca">
+    <meta name="theme-color" content="#dbe4e9">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            /* 莫兰迪低饱和度色调 */
             --morandi-blue: #a3c4dc;
-            --morandi-pink: #d9b8b1;
-            --morandi-green: #bbcbc2;
-            --morandi-grey: #c0c7ca;
             --morandi-text-main: #3d5059;
             --morandi-text-sub: #7b909a;
-            --morandi-accent: #8e7cc3; /* 柔和紫色作为强调 */
-            --morandi-up: #bf8d8e; /* 脱俗的灰粉 */
-            --morandi-down: #8ba99b; /* 脱俗的灰绿 */
-
-            /* 基础 UI 设定 (亮色模式) */
-            --bg-gradient: linear-gradient(135deg, #f0f3f6, #e0e5eb);
-            --card-bg: rgba(255, 255, 255, 0.3);
-            --input-bg: rgba(255, 255, 255, 0.2);
-            --stroke: rgba(255, 255, 255, 0.2);
-            --shadow-soft: 0 10px 40px -10px rgba(0, 0, 0, 0.05);
-            --backdrop-blur: blur(30px) saturate(160%);
+            --morandi-accent: #8e7cc3; 
+            --morandi-up: #bf8d8e; 
+            --morandi-down: #8ba99b; 
             
-            /* 尺寸与间距 */
-            --padding-card: 25px;
-            --border-radius: 25px;
-            --border-radius-input: 15px;
+            /* 手机端 100% 兼容的莫兰迪渐变背景 */
+            --bg-gradient: linear-gradient(135deg, #e3ebf0 0%, #f4f6f8 40%, #e2d9dd 100%);
+            --card-bg: rgba(255, 255, 255, 0.45);
+            --input-bg: rgba(255, 255, 255, 0.5);
+            --stroke: rgba(255, 255, 255, 0.6);
+            --shadow-soft: 0 8px 32px rgba(31, 38, 135, 0.05);
+            --backdrop-blur: blur(15px);
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
-                /* 暗色模式下的莫兰迪调整 */
                 --morandi-text-main: #d9e1e8;
                 --morandi-text-sub: #a9b7c3;
                 --morandi-accent: #a894e2;
-                --bg-gradient: linear-gradient(135deg, #10151f, #1e2532);
-                --card-bg: rgba(30, 41, 59, 0.5);
+                --bg-gradient: linear-gradient(135deg, #18202c 0%, #222b38 50%, #2a2333 100%);
+                --card-bg: rgba(30, 41, 59, 0.4);
                 --input-bg: rgba(15, 23, 42, 0.3);
-                --stroke: rgba(255, 255, 255, 0.05);
-                --shadow-soft: 0 15px 50px -15px rgba(0, 0, 0, 0.2);
+                --stroke: rgba(255, 255, 255, 0.08);
+                --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.2);
             }
         }
 
-        /* 基础样式重置与排版 */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-gradient); color: var(--morandi-text-main);
-            margin: 0; padding: 20px env(safe-area-inset-right) 40px env(safe-area-inset-left);
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg-gradient); 
+            background-attachment: fixed; /* 保证滑动时背景不动 */
+            color: var(--morandi-text-main);
+            margin: 0; padding: 25px 20px 40px 20px;
             min-height: 100vh;
-            display: flex; justify-content: center; align-items: center;
-            position: relative; overflow-x: hidden;
+            display: flex; justify-content: center; align-items: flex-start;
         }
 
-        /* 增加柔和模糊渐变背景效果 */
-        body::before, body::after {
-            content: ''; position: fixed; width: 150vw; height: 150vh; filter: blur(100px); opacity: 0.5; z-index: -1;
-        }
-        body::before { background: radial-gradient(circle, #e0e5eb, transparent); top: -50%; left: -50%; }
-        body::after { background: radial-gradient(circle, #f0f3f6, transparent); bottom: -50%; right: -50%; }
-        @media (prefers-color-scheme: dark) {
-            body::before { background: radial-gradient(circle, #1e2532, transparent); }
-            body::after { background: radial-gradient(circle, #10151f, transparent); }
-        }
+        .main-container { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 18px; }
 
-        /* 主容器，确保网页与移动端兼容 */
-        .main-container {
-            width: 100%; max-width: 700px;
-            display: flex; flex-direction: column; gap: 20px;
-        }
-
-        /* 毛玻璃卡片模块样式 (核心) */
+        /* 核心毛玻璃卡片 */
         .glass {
-            background: var(--card-bg); backdrop-filter: var(--backdrop-blur); -webkit-backdrop-filter: var(--backdrop-blur);
-            border: 1px solid var(--stroke); border-radius: var(--border-radius);
-            padding: var(--padding-card);
+            background: var(--card-bg); 
+            backdrop-filter: var(--backdrop-blur); 
+            -webkit-backdrop-filter: var(--backdrop-blur);
+            border: 1px solid var(--stroke); 
+            border-radius: 20px;
+            padding: 22px;
             box-shadow: var(--shadow-soft);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .glass:hover { transform: translateY(-3px); box-shadow: 0 15px 50px -10px rgba(0,0,0,0.07); }
 
-        /* 顶部标题区 */
-        .header { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; padding-left: 5px; }
-        .header i { font-size: 26px; color: var(--morandi-accent); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); }
-        .header h2 { margin: 0; font-weight: 700; font-size: 1.5rem; letter-spacing: -0.5px; color: var(--morandi-text-main); }
+        .header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding-left: 5px; }
+        .header i { font-size: 24px; color: var(--morandi-accent); }
+        .header h2 { margin: 0; font-weight: 700; font-size: 1.4rem; color: var(--morandi-text-main); }
 
-        /* 输入组样式 */
-        .input-group { margin-bottom: 18px; }
-        label { display: block; font-size: 0.8rem; color: var(--morandi-text-sub); margin-bottom: 10px; font-weight: 500; letter-spacing: 0.5px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.8rem; color: var(--morandi-text-sub); margin-bottom: 8px; font-weight: 500; }
         input {
-            width: 100%; padding: 14px 18px; border-radius: var(--border-radius-input);
-            border: 1px solid transparent; border-bottom: 1px solid var(--stroke);
+            width: 100%; padding: 12px 16px; border-radius: 12px;
+            border: 1px solid var(--stroke);
             background: var(--input-bg); color: var(--morandi-text-main);
-            font-size: 1rem; font-weight: 500; outline: none;
-            transition: all 0.3s ease;
+            font-size: 1rem; outline: none;
         }
-        input:focus { border-color: var(--morandi-accent); box-shadow: 0 2px 8px rgba(142, 124, 195, 0.1); }
-        input::placeholder { color: rgba(100, 116, 139, 0.4); }
+        input:focus { border-color: var(--morandi-accent); }
+        input::placeholder { color: rgba(123, 144, 154, 0.5); }
 
-        /* 网格布局区 */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         
-        /* 结果展示卡片 */
-        .res-card { text-align: center; padding: 20px; }
+        .res-card { text-align: center; padding: 18px; }
         .res-label { font-size: 0.75rem; color: var(--morandi-text-sub); margin-bottom: 6px; font-weight: 500; }
-        .res-value { font-size: 1.35rem; font-weight: 800; color: var(--morandi-text-main); letter-spacing: -0.5px; }
+        .res-value { font-size: 1.3rem; font-weight: 800; color: var(--morandi-text-main); }
         .sub-res { font-size: 0.8rem; margin-top: 6px; color: var(--morandi-text-sub); font-weight: 500; }
         
-        /* 高亮核心指标卡片 */
-        .res-card.highlight {
-            border: 2px solid var(--morandi-accent); background: rgba(142, 124, 195, 0.03);
-            box-shadow: 0 12px 30px -5px rgba(142, 124, 195, 0.1);
-        }
-        .highlight .res-label { color: var(--morandi-accent); }
-        .highlight .res-value { color: var(--morandi-accent); font-size: 1.45rem; }
+        .res-card.highlight { border: 2px solid var(--morandi-accent); background: rgba(142, 124, 195, 0.05); }
+        .highlight .res-label, .highlight .res-value { color: var(--morandi-accent); }
 
-        /* 费用明细 */
-        .fees-list { font-size: 0.8rem; color: var(--morandi-text-sub); line-height: 2; font-weight: 500; }
-        .fees-item { display: flex; justify-content: space-between; gap: 10px; }
-        .fees-item span:first-child { color: var(--morandi-text-sub); }
-        .fees-item span:last-child { color: var(--morandi-text-main); font-weight: 500; }
-        hr { border: none; border-top: 1px solid var(--stroke); margin: 20px 0; }
+        .fees-list { font-size: 0.8rem; color: var(--morandi-text-sub); line-height: 2.2; }
+        .fees-item { display: flex; justify-content: space-between; }
+        .fees-item span:last-child { color: var(--morandi-text-main); font-weight: 600; }
+        hr { border: none; border-top: 1px dashed var(--stroke); margin: 15px 0; }
     </style>
 </head>
 <body>
@@ -140,13 +104,61 @@
     <div class="glass">
         <div class="input-group">
             <label>买入单价 (元)</label>
-            <input type="number" id="buyPrice" placeholder="请输入您的买入单价" step="0.001" oninput="calc()">
+            <input type="number" id="buyPrice" placeholder="请输入买入单价" step="0.001" oninput="calc()">
         </div>
         <div class="grid">
             <div class="input-group">
                 <label>股票数量 (股)</label>
-                <input type="number" id="qty" placeholder="步长100" step="100" oninput="calc()">
+                <input type="number" id="qty" placeholder="输入数量" step="100" oninput="calc()">
             </div>
             <div class="input-group">
                 <label>佣金率 (%)</label>
-                <input type="number" 
+                <input type="number" id="commRate" value="0.02" step="0.001" oninput="calc()">
+            </div>
+        </div>
+        <div class="input-group" style="margin-bottom:0;">
+            <label>预期卖出价 (元) - 可选</label>
+            <input type="number" id="sellPrice" placeholder="不填则仅计算保本" step="0.001" oninput="calc()">
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="glass res-card highlight">
+            <div class="res-label">保本卖出预期价格</div>
+            <div id="breakEven" class="res-value">0.000</div>
+        </div>
+        <div class="glass res-card highlight">
+            <div class="res-label">保本涨幅</div>
+            <div id="breakPercent" class="res-value">0.00%</div>
+        </div>
+    </div>
+
+    <div class="glass res-card">
+        <div class="res-label">预计净利润</div>
+        <div id="netProfit" class="res-value">0.00</div>
+        <div id="profitPerShare" class="sub-res">每股净赚: 0.000</div>
+    </div>
+
+    <div class="glass">
+        <div class="res-label" style="margin-bottom: 10px;">税费支出明细</div>
+        <div class="fees-list" id="feesDetail">
+            <div style="text-align:center; padding: 10px 0;">请输入买入单价和数量查看</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function calc() {
+        const P_buy = parseFloat(document.getElementById('buyPrice').value) || 0;
+        const qty = parseInt(document.getElementById('qty').value) || 0;
+        const P_sell = parseFloat(document.getElementById('sellPrice').value) || 0;
+        const rate = (parseFloat(document.getElementById('commRate').value) || 0) / 100;
+
+        const bePriceEl = document.getElementById('breakEven');
+        const bePercentEl = document.getElementById('breakPercent');
+        const npEl = document.getElementById('netProfit');
+        const ppsEl = document.getElementById('profitPerShare');
+        const feesEl = document.getElementById('feesDetail');
+
+        if (P_buy <= 0 || qty <= 0) {
+            const emptyVal = P_b
