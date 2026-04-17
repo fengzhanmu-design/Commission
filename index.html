@@ -163,4 +163,73 @@
         const P_sell = parseVal('sellPrice');
         const rate = parseVal('commRate') / 100;
 
-        const bePriceEl = document.getE
+        const bePriceEl = document.getElementById('breakEven');
+        const bePercentEl = document.getElementById('breakPercent');
+        const npEl = document.getElementById('netProfit');
+        const ppsEl = document.getElementById('profitPerShare');
+        const feesEl = document.getElementById('feesDetail');
+
+        if (P_buy <= 0 || qty <= 0) {
+            const emptyVal = '0.000';
+            bePriceEl.innerText = emptyVal; bePercentEl.innerText = '0.00%';
+            npEl.innerText = '0.00'; npEl.style.color = 'var(--morandi-text-main)';
+            ppsEl.innerText = `每股净赚: ${emptyVal}`;
+            feesEl.innerHTML = '<div style="text-align:center; padding: 10px 0;">请输入买入单价和数量查看</div>';
+            return;
+        }
+
+        const buyAmt = P_buy * qty;
+        const buyComm = Math.max(buyAmt * rate, 5); 
+        const buyTrans = buyAmt * 0.00001; 
+        const totalBuyCost = buyAmt + buyComm + buyTrans;
+
+        let bePrice = P_buy * 1.001; 
+        for(let i=0; i<5; i++) {
+            let sCommGuess = Math.max(bePrice * qty * rate, 5);
+            bePrice = (totalBuyCost + sCommGuess) / (qty * (1 - 0.00001 - 0.0005));
+        }
+
+        bePriceEl.innerText = bePrice.toFixed(3);
+        const beInc = ((bePrice - P_buy) / P_buy * 100);
+        bePercentEl.innerText = beInc.toFixed(2) + '%';
+
+        if (P_sell > 0) {
+            const sellAmt = P_sell * qty;
+            const sellComm = Math.max(sellAmt * rate, 5);
+            const sellTrans = sellAmt * 0.00001;
+            const sellStamp = sellAmt * 0.0005; 
+            const totalSellNet = sellAmt - sellComm - sellTrans - sellStamp;
+
+            const profit = totalSellNet - totalBuyCost;
+            
+            npEl.innerText = (profit >= 0 ? '+' : '') + profit.toFixed(2);
+            npEl.style.color = profit >= 0 ? 'var(--morandi-up)' : 'var(--morandi-down)';
+            ppsEl.innerText = `每股净赚: ${(profit/qty).toFixed(3)}`;
+
+            feesEl.innerHTML = `
+                <div class="fees-item"><span>买入佣金(保5)</span><span>${buyComm.toFixed(2)}</span></div>
+                <div class="fees-item"><span>买入过户费</span><span>${buyTrans.toFixed(2)}</span></div>
+                <hr>
+                <div class="fees-item"><span>卖出佣金(保5)</span><span>${sellComm.toFixed(2)}</span></div>
+                <div class="fees-item"><span>卖出过户费</span><span>${sellTrans.toFixed(2)}</span></div>
+                <div class="fees-item"><span>卖出印花税</span><span>${sellStamp.toFixed(2)}</span></div>
+                <div class="fees-item" style="margin-top:5px; font-weight:700; color:var(--morandi-text-main)">
+                    <span>总税费支出</span><span>${(buyComm+buyTrans+sellComm+sellTrans+sellStamp).toFixed(2)}</span>
+                </div>
+            `;
+        } else {
+            npEl.innerText = '0.00'; npEl.style.color = 'var(--morandi-text-main)';
+            ppsEl.innerText = `每股净赚: 0.000`;
+            feesEl.innerHTML = `
+                <div class="fees-item"><span>买入佣金(保5)</span><span>${buyComm.toFixed(2)}</span></div>
+                <div class="fees-item"><span>买入过户费</span><span>${buyTrans.toFixed(2)}</span></div>
+                <hr>
+                <div style="text-align:center; padding: 10px 0;">输入预期卖出价查看完整明细</div>
+            `;
+        }
+    }
+    
+    calc(); 
+</script>
+</body>
+</html>
