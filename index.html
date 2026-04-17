@@ -9,15 +9,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            /* 更加通透的苹果系色彩与莫兰迪结合 */
             --bg-color: #f0f2f5;
-            --brand-primary: #6366f1; /* 充满活力的靛蓝 */
+            --brand-primary: #6366f1; 
             --brand-primary-light: rgba(99, 102, 241, 0.1);
             --text-main: #1e293b;
             --text-sub: #64748b;
             --text-muted: #94a3b8;
-            --up-color: #ef4444; /* A股经典红 */
-            --down-color: #10b981; /* A股经典绿 */
+            --up-color: #ef4444; 
+            --down-color: #10b981; 
             
             --glass-bg: rgba(255, 255, 255, 0.75);
             --glass-border: rgba(255, 255, 255, 0.8);
@@ -46,7 +45,6 @@
         body {
             font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg-color);
-            /* 柔和的动态网格背景 */
             background-image: radial-gradient(var(--glass-border) 1px, transparent 1px);
             background-size: 20px 20px;
             color: var(--text-main);
@@ -55,7 +53,6 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* 优雅的入场动画 */
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -91,7 +88,6 @@
         
         label { display: block; font-size: 0.8rem; color: var(--text-sub); margin-bottom: 8px; font-weight: 600; }
         
-        .input-wrapper { position: relative; }
         input {
             width: 100%; padding: 16px; border-radius: 16px;
             border: 1.5px solid transparent;
@@ -103,7 +99,6 @@
         input:focus { border-color: var(--brand-primary); background: var(--glass-bg); box-shadow: 0 0 0 4px var(--brand-primary-light); }
         input::placeholder { color: var(--text-muted); font-weight: 500; }
 
-        /* 结果展示区优化 */
         .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .res-box { text-align: center; padding: 20px 10px; border-radius: 20px; background: var(--glass-bg); border: 1px solid var(--glass-border); box-shadow: var(--shadow-sm); }
         .res-box.highlight { border-color: var(--brand-primary); background: var(--brand-primary-light); }
@@ -114,9 +109,11 @@
         .res-value { font-size: 1.4rem; font-weight: 800; font-variant-numeric: tabular-nums; }
         .highlight .res-value { color: var(--brand-primary); }
         
-        .profit-card { text-align: center; padding: 28px 20px; }
-        .profit-value { font-size: 2.2rem; font-weight: 900; margin: 8px 0; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
-        .profit-sub { font-size: 0.85rem; color: var(--text-sub); font-weight: 500; }
+        /* 独立的双子星利润面板 */
+        .profit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .profit-box { text-align: center; padding: 24px 10px; border-radius: 24px; background: var(--glass-bg); border: 1px solid var(--glass-border); box-shadow: var(--shadow-lg); }
+        .profit-value { font-size: 1.7rem; font-weight: 900; margin: 8px 0; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+        .profit-sub { font-size: 0.8rem; color: var(--text-sub); font-weight: 500; }
 
         .fees-title { font-size: 0.9rem; font-weight: 700; color: var(--text-main); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
         .fees-list { font-size: 0.85rem; color: var(--text-sub); line-height: 2.4; }
@@ -153,7 +150,7 @@
         </div>
         <div class="input-group">
             <label>预期卖出价 (元) <span style="color:var(--text-muted);font-weight:400;">- 选填</span></label>
-            <input type="text" inputmode="decimal" id="sellPrice" placeholder="输入以测算利润" oninput="calc()" onchange="calc()" onkeyup="calc()">
+            <input type="text" inputmode="decimal" id="sellPrice" placeholder="输入以测算利润与涨幅" oninput="calc()" onchange="calc()" onkeyup="calc()">
         </div>
     </div>
 
@@ -168,10 +165,17 @@
         </div>
     </div>
 
-    <div class="glass-card profit-card">
-        <div class="res-label">预计净利润 (元)</div>
-        <div id="netProfit" class="profit-value" style="color: var(--text-main);">0.00</div>
-        <div id="profitPerShare" class="profit-sub">每股净赚: 0.000</div>
+    <div class="profit-grid">
+        <div class="profit-box">
+            <div class="res-label">预计净利润 (元)</div>
+            <div id="netProfit" class="profit-value" style="color: var(--text-main);">0.00</div>
+            <div id="profitPerShare" class="profit-sub">每股净赚: 0.000</div>
+        </div>
+        <div class="profit-box">
+            <div class="res-label">目标涨跌幅</div>
+            <div id="targetPercent" class="profit-value" style="color: var(--text-main);">0.00%</div>
+            <div id="netReturn" class="profit-sub">实际净回报: 0.00%</div>
+        </div>
     </div>
 
     <div class="glass-card">
@@ -187,10 +191,8 @@
 </div>
 
 <script>
-    // 强制清除旧缓存
     if ('caches' in window) { caches.keys().then(keys => { keys.forEach(key => caches.delete(key)); }); }
 
-    // 专业数字格式化工具 (加入千分位)
     const fmtCcy = (num) => Number(num).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     const fmtShare = (num) => Number(num).toLocaleString('zh-CN', {minimumFractionDigits: 3, maximumFractionDigits: 3});
 
@@ -204,14 +206,22 @@
 
         const bePriceEl = document.getElementById('breakEven');
         const bePercentEl = document.getElementById('breakPercent');
+        
         const npEl = document.getElementById('netProfit');
         const ppsEl = document.getElementById('profitPerShare');
+        const tpEl = document.getElementById('targetPercent');
+        const nrEl = document.getElementById('netReturn');
+        
         const feesEl = document.getElementById('feesDetail');
 
         if (P_buy <= 0 || qty <= 0) {
             bePriceEl.innerText = '0.000'; bePercentEl.innerText = '0.00%';
+            
             npEl.innerText = '0.00'; npEl.style.color = 'var(--text-main)';
             ppsEl.innerText = `每股净赚: 0.000`;
+            tpEl.innerText = '0.00%'; tpEl.style.color = 'var(--text-main)';
+            nrEl.innerText = `实际净回报: 0.00%`;
+            
             feesEl.innerHTML = '<div style="text-align:center; padding: 20px 0; color: var(--text-muted);">等待输入交易参数...</div>';
             return;
         }
@@ -248,10 +258,21 @@
             
             ppsEl.innerText = `每股净赚: ${fmtShare(profit/qty)}`;
 
+            // 涨幅与净回报率计算
+            const targetInc = ((P_sell - P_buy) / P_buy) * 100;
+            const netRet = (profit / totalBuyCost) * 100;
+
+            tpEl.innerText = (targetInc > 0 ? '+' : '') + targetInc.toFixed(2) + '%';
+            if (targetInc > 0) { tpEl.style.color = 'var(--up-color)'; }
+            else if (targetInc < 0) { tpEl.style.color = 'var(--down-color)'; }
+            else { tpEl.style.color = 'var(--text-main)'; }
+
+            nrEl.innerText = `实际净回报: ${(netRet > 0 ? '+' : '')}${netRet.toFixed(2)}%`;
+
             feesEl.innerHTML = `
-                <div class="fees-item"><span>买入佣金 <span style="font-size:0.75rem;color:var(--text-muted)">(含5元保底)</span></span><span>${fmtCcy(buyComm)}</span></div>
+                <div class="fees-item"><span>买入佣金 <span style="font-size:0.75rem;color:var(--text-muted)">(含保底)</span></span><span>${fmtCcy(buyComm)}</span></div>
                 <div class="fees-item"><span>买入过户费</span><span>${fmtCcy(buyTrans)}</span></div>
-                <div class="fees-item"><span>卖出佣金 <span style="font-size:0.75rem;color:var(--text-muted)">(含5元保底)</span></span><span>${fmtCcy(sellComm)}</span></div>
+                <div class="fees-item"><span>卖出佣金 <span style="font-size:0.75rem;color:var(--text-muted)">(含保底)</span></span><span>${fmtCcy(sellComm)}</span></div>
                 <div class="fees-item"><span>卖出过户费</span><span>${fmtCcy(sellTrans)}</span></div>
                 <div class="fees-item"><span>卖出印花税 <span style="font-size:0.75rem;color:var(--text-muted)">(万五)</span></span><span>${fmtCcy(sellStamp)}</span></div>
                 <div class="fees-item"><span>摩擦成本总计</span><span>${fmtCcy(buyComm+buyTrans+sellComm+sellTrans+sellStamp)}</span></div>
@@ -259,8 +280,11 @@
         } else {
             npEl.innerText = '0.00'; npEl.style.color = 'var(--text-main)';
             ppsEl.innerText = `每股净赚: 0.000`;
+            tpEl.innerText = '0.00%'; tpEl.style.color = 'var(--text-main)';
+            nrEl.innerText = `实际净回报: 0.00%`;
+            
             feesEl.innerHTML = `
-                <div class="fees-item"><span>买入佣金 <span style="font-size:0.75rem;color:var(--text-muted)">(含5元保底)</span></span><span>${fmtCcy(buyComm)}</span></div>
+                <div class="fees-item"><span>买入佣金 <span style="font-size:0.75rem;color:var(--text-muted)">(含保底)</span></span><span>${fmtCcy(buyComm)}</span></div>
                 <div class="fees-item"><span>买入过户费</span><span>${fmtCcy(buyTrans)}</span></div>
                 <div class="fees-item" style="border:none; justify-content:center; padding-top:16px;">
                     <span style="font-weight:400; color:var(--text-muted); font-size:0.8rem;">输入预期卖出价查看完整税费与利润</span>
