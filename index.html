@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>股票成本助手 V1.0</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4361ee">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee; --up: #ef4444; --down: #10b981;
+            --bg: #f8fafc; --card: rgba(255, 255, 255, 0.7);
+            --text: #1e293b; --sub: #64748b; --stroke: rgba(255, 255, 255, 0.8);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f172a; --card: rgba(30, 41, 59, 0.6);
+                --text: #f1f5f9; --sub: #94a3b8; --stroke: rgba(255, 255, 255, 0.1);
+            }
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg); color: var(--text);
+            margin: 0; padding: 20px env(safe-area-inset-right) 40px env(safe-area-inset-left);
+            min-height: 100vh;
+        }
+        .glass {
+            background: var(--card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--stroke); border-radius: 20px; padding: 20px; margin-bottom: 15px;
+        }
+        .header { display: flex; align-items: center; gap: 10px; margin-bottom: 25px; }
+        .header i { font-size: 24px; color: var(--primary); }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.85rem; color: var(--sub); margin-bottom: 8px; font-weight: 500; }
+        input {
+            width: 100%; padding: 12px 15px; border-radius: 12px; border: 1px solid rgba(128,128,128,0.1);
+            background: rgba(128,128,128,0.05); color: var(--text); font-size: 1rem; outline: none;
+        }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .res-card { text-align: center; padding: 15px; }
+        .res-label { font-size: 0.75rem; color: var(--sub); margin-bottom: 5px; }
+        .res-value { font-size: 1.25rem; font-weight: 800; }
+        .highlight { border: 2px solid var(--primary); background: rgba(67, 97, 238, 0.05); }
+        .fees-list { font-size: 0.8rem; color: var(--sub); line-height: 1.8; }
+        .fees-item { display: flex; justify-content: space-between; }
+        hr { border: none; border-top: 1px solid rgba(128,128,128,0.1); margin: 15px 0; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <i class="fas fa-chart-line"></i>
+    <h2 style="margin:0">股票成本助手</h2>
+</div>
+
+<div class="glass">
+    <div class="input-group">
+        <label>买入单价 (元)</label>
+        <input type="number" id="buyPrice" value="17.45" step="0.001" oninput="calc()">
+    </div>
+    <div class="grid">
+        <div class="input-group">
+            <label>股票数量 (股)</label>
+            <input type="number" id="qty" value="100" step="100" oninput="calc()">
+        </div>
+        <div class="input-group">
+            <label>佣金率 (%)</label>
+            <input type="number" id="commRate" value="0.02" step="0.001" oninput="calc()">
+        </div>
+    </div>
+    <div class="input-group">
+        <label>卖出预期价 (元)</label>
+        <input type="number" id="sellPrice" value="17.69" step="0.001" oninput="calc()">
+    </div>
+</div>
+
+<div class="grid">
+    <div class="glass res-card highlight">
+        <div class="res-label">保本卖出价</div>
+        <div id="breakEven" class="res-value">0.000</div>
+    </div>
+    <div class="glass res-card highlight">
+        <div class="res-label">保本涨幅</div>
+        <div id="breakPercent" class="res-value">0.00%</div>
+    </div>
+</div>
+
+<div class="glass res-card">
+    <div class="res-label">预计净利润</div>
+    <div id="netProfit" class="res-value">0.00</div>
+    <div id="profitPerShare" style="font-size: 0.8rem; margin-top: 5px; color: var(--sub);">每股净赚: 0.000</div>
+</div>
+
+<div class="glass">
+    <div class="res-label" style="margin-bottom: 10px;">税费明细</div>
+    <div class="fees-list" id="feesDetail"></div>
+</div>
+
+<script>
+    function calc() {
+        const P_buy = parseFloat(document.getElementById('buyPrice').value) || 0;
+        const P_sell = parseFloat(document.getElementById('sellPrice').value) || 0;
+        const qty = parseInt(document.getElementById('qty').value) || 0;
+        const rate = (parseFloat(document.getElementById('commRate').value) || 0) / 100;
+
+        // A股交易规则
+        const buyAmt = P_buy * qty;
+        const buyComm = Math.max(buyAmt * rate, 5); // 5元保底
+        const buyTrans = buyAmt * 0.00001; // 过户费
+        const totalBuyCost = buyAmt + buyComm + buyTrans;
+
+        const sellAmt = P_sell * qty;
+        const sellComm = Math.max(sellAmt * rate, 5);
+        const sellTrans = sellAmt * 0.00001;
+        const sellStamp = sellAmt * 0.0005; // 印花税 0.05%
+        const totalSellNet = sellAmt - sellComm - sellTrans - sellStamp;
+
+        const profit = totalSellNet - totalBuyCost;
+        
+        // 计算保本价 (迭代法简单处理保底5元逻辑)
+        let bePrice = P_buy * 1.001; // 初始猜测
+        for(let i=0; i<5; i++) {
+            let sComm = Math.max(bePrice * qty * rate, 5);
+            bePrice = (totalBuyCost + sComm) / (qty * (1 - 0.00001 - 0.0005));
+        }
+
+        // 渲染 UI
+        document.getElementById('breakEven').innerText = bePrice.toFixed(3);
+        const beInc = ((bePrice - P_buy) / P_buy * 100);
+        document.getElementById('breakPercent').innerText = beInc.toFixed(2) + '%';
+        
+        const npEl = document.getElementById('netProfit');
+        npEl.innerText = (profit >= 0 ? '+' : '') + profit.toFixed(2);
+        npEl.style.color = profit >= 0 ? 'var(--up)' : 'var(--down)';
+        document.getElementById('profitPerShare').innerText = `每股净利: ${(profit/qty).toFixed(3)}`;
+
+        document.getElementById('feesDetail').innerHTML = `
+            <div class="fees-item"><span>买入佣金(保5)</span><span>${buyComm.toFixed(2)}</span></div>
+            <div class="fees-item"><span>买入过户费</span><span>${buyTrans.toFixed(2)}</span></div>
+            <hr>
+            <div class="fees-item"><span>卖出佣金(保5)</span><span>${sellComm.toFixed(2)}</span></div>
+            <div class="fees-item"><span>卖出过户费</span><span>${sellTrans.toFixed(2)}</span></div>
+            <div class="fees-item"><span>卖出印花税</span><span>${sellStamp.toFixed(2)}</span></div>
+            <div class="fees-item" style="margin-top:5px; font-weight:bold; color:var(--text)">
+                <span>总税费支出</span><span>${(buyComm+buyTrans+sellComm+sellTrans+sellStamp).toFixed(2)}</span>
+            </div>
+        `;
+    }
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+    }
+    calc();
+</script>
+</body>
+</html>
