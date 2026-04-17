@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>股票成本助手 V1.3</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>股票成本助手 V1.4</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#dbe4e9">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -16,24 +16,23 @@
             --morandi-up: #bf8d8e; 
             --morandi-down: #8ba99b; 
             
-            /* 手机端 100% 兼容的莫兰迪渐变背景 */
             --bg-gradient: linear-gradient(135deg, #e3ebf0 0%, #f4f6f8 40%, #e2d9dd 100%);
             --card-bg: rgba(255, 255, 255, 0.45);
-            --input-bg: rgba(255, 255, 255, 0.5);
-            --stroke: rgba(255, 255, 255, 0.6);
+            --input-bg: rgba(255, 255, 255, 0.6);
+            --stroke: rgba(255, 255, 255, 0.7);
             --shadow-soft: 0 8px 32px rgba(31, 38, 135, 0.05);
             --backdrop-blur: blur(15px);
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
-                --morandi-text-main: #d9e1e8;
-                --morandi-text-sub: #a9b7c3;
+                --morandi-text-main: #e2e8f0;
+                --morandi-text-sub: #94a3b8;
                 --morandi-accent: #a894e2;
                 --bg-gradient: linear-gradient(135deg, #18202c 0%, #222b38 50%, #2a2333 100%);
                 --card-bg: rgba(30, 41, 59, 0.4);
-                --input-bg: rgba(15, 23, 42, 0.3);
-                --stroke: rgba(255, 255, 255, 0.08);
+                --input-bg: rgba(15, 23, 42, 0.4);
+                --stroke: rgba(255, 255, 255, 0.1);
                 --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.2);
             }
         }
@@ -42,7 +41,7 @@
         body {
             font-family: system-ui, -apple-system, sans-serif;
             background: var(--bg-gradient); 
-            background-attachment: fixed; /* 保证滑动时背景不动 */
+            background-attachment: fixed; 
             color: var(--morandi-text-main);
             margin: 0; padding: 25px 20px 40px 20px;
             min-height: 100vh;
@@ -51,7 +50,6 @@
 
         .main-container { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 18px; }
 
-        /* 核心毛玻璃卡片 */
         .glass {
             background: var(--card-bg); 
             backdrop-filter: var(--backdrop-blur); 
@@ -69,13 +67,14 @@
         .input-group { margin-bottom: 15px; }
         label { display: block; font-size: 0.8rem; color: var(--morandi-text-sub); margin-bottom: 8px; font-weight: 500; }
         input {
-            width: 100%; padding: 12px 16px; border-radius: 12px;
+            width: 100%; padding: 14px 16px; border-radius: 12px;
             border: 1px solid var(--stroke);
             background: var(--input-bg); color: var(--morandi-text-main);
-            font-size: 1rem; outline: none;
+            font-size: 1.05rem; font-weight: 600; outline: none;
+            transition: border 0.3s;
         }
         input:focus { border-color: var(--morandi-accent); }
-        input::placeholder { color: rgba(123, 144, 154, 0.5); }
+        input::placeholder { color: rgba(123, 144, 154, 0.5); font-weight: 400; }
 
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         
@@ -89,7 +88,7 @@
 
         .fees-list { font-size: 0.8rem; color: var(--morandi-text-sub); line-height: 2.2; }
         .fees-item { display: flex; justify-content: space-between; }
-        .fees-item span:last-child { color: var(--morandi-text-main); font-weight: 600; }
+        .fees-item span:last-child { color: var(--morandi-text-main); font-weight: 700; }
         hr { border: none; border-top: 1px dashed var(--stroke); margin: 15px 0; }
     </style>
 </head>
@@ -104,21 +103,21 @@
     <div class="glass">
         <div class="input-group">
             <label>买入单价 (元)</label>
-            <input type="number" id="buyPrice" placeholder="请输入买入单价" step="0.001" oninput="calc()">
+            <input type="text" inputmode="decimal" id="buyPrice" placeholder="请输入买入单价" oninput="calc()" onchange="calc()" onkeyup="calc()">
         </div>
         <div class="grid">
             <div class="input-group">
                 <label>股票数量 (股)</label>
-                <input type="number" id="qty" placeholder="输入数量" step="100" oninput="calc()">
+                <input type="text" inputmode="numeric" id="qty" placeholder="输入数量" oninput="calc()" onchange="calc()" onkeyup="calc()">
             </div>
             <div class="input-group">
                 <label>佣金率 (%)</label>
-                <input type="number" id="commRate" value="0.02" step="0.001" oninput="calc()">
+                <input type="text" inputmode="decimal" id="commRate" value="0.02" oninput="calc()" onchange="calc()" onkeyup="calc()">
             </div>
         </div>
         <div class="input-group" style="margin-bottom:0;">
             <label>预期卖出价 (元) - 可选</label>
-            <input type="number" id="sellPrice" placeholder="不填则仅计算保本" step="0.001" oninput="calc()">
+            <input type="text" inputmode="decimal" id="sellPrice" placeholder="不填则仅计算保本" oninput="calc()" onchange="calc()" onkeyup="calc()">
         </div>
     </div>
 
@@ -148,17 +147,20 @@
 </div>
 
 <script>
+    // 强制清除旧缓存，确保更新生效
+    if ('caches' in window) {
+        caches.keys().then(keys => {
+            keys.forEach(key => caches.delete(key));
+        });
+    }
+
     function calc() {
-        const P_buy = parseFloat(document.getElementById('buyPrice').value) || 0;
-        const qty = parseInt(document.getElementById('qty').value) || 0;
-        const P_sell = parseFloat(document.getElementById('sellPrice').value) || 0;
-        const rate = (parseFloat(document.getElementById('commRate').value) || 0) / 100;
+        // 安全提取数据，处理可能的中文逗号或空格
+        const parseVal = (id) => parseFloat(document.getElementById(id).value.replace(/,/g, '')) || 0;
+        
+        const P_buy = parseVal('buyPrice');
+        const qty = parseVal('qty');
+        const P_sell = parseVal('sellPrice');
+        const rate = parseVal('commRate') / 100;
 
-        const bePriceEl = document.getElementById('breakEven');
-        const bePercentEl = document.getElementById('breakPercent');
-        const npEl = document.getElementById('netProfit');
-        const ppsEl = document.getElementById('profitPerShare');
-        const feesEl = document.getElementById('feesDetail');
-
-        if (P_buy <= 0 || qty <= 0) {
-            const emptyVal = P_b
+        const bePriceEl = document.getE
