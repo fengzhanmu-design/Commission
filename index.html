@@ -3,159 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>股票成本助手 V1.4</title>
+    <title>股票交易测算 Pro</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#dbe4e9">
+    <meta name="theme-color" content="#f0f2f5">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --morandi-blue: #a3c4dc;
-            --morandi-text-main: #3d5059;
-            --morandi-text-sub: #7b909a;
-            --morandi-accent: #8e7cc3; 
-            --morandi-up: #bf8d8e; 
-            --morandi-down: #8ba99b; 
+            /* 更加通透的苹果系色彩与莫兰迪结合 */
+            --bg-color: #f0f2f5;
+            --brand-primary: #6366f1; /* 充满活力的靛蓝 */
+            --brand-primary-light: rgba(99, 102, 241, 0.1);
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --text-muted: #94a3b8;
+            --up-color: #ef4444; /* A股经典红 */
+            --down-color: #10b981; /* A股经典绿 */
             
-            --bg-gradient: linear-gradient(135deg, #e3ebf0 0%, #f4f6f8 40%, #e2d9dd 100%);
-            --card-bg: rgba(255, 255, 255, 0.45);
-            --input-bg: rgba(255, 255, 255, 0.6);
-            --stroke: rgba(255, 255, 255, 0.7);
-            --shadow-soft: 0 8px 32px rgba(31, 38, 135, 0.05);
-            --backdrop-blur: blur(15px);
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+            --blur: blur(20px);
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
-                --morandi-text-main: #e2e8f0;
-                --morandi-text-sub: #94a3b8;
-                --morandi-accent: #a894e2;
-                --bg-gradient: linear-gradient(135deg, #18202c 0%, #222b38 50%, #2a2333 100%);
-                --card-bg: rgba(30, 41, 59, 0.4);
-                --input-bg: rgba(15, 23, 42, 0.4);
-                --stroke: rgba(255, 255, 255, 0.1);
-                --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.2);
+                --bg-color: #0f172a;
+                --text-main: #f8fafc;
+                --text-sub: #cbd5e1;
+                --text-muted: #64748b;
+                --glass-bg: rgba(30, 41, 59, 0.6);
+                --glass-border: rgba(255, 255, 255, 0.08);
+                --input-bg: rgba(15, 23, 42, 0.5);
+                --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+                --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.3);
             }
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        
         body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background: var(--bg-gradient); 
-            background-attachment: fixed; 
-            color: var(--morandi-text-main);
-            margin: 0; padding: 25px 20px 40px 20px;
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-color);
+            /* 柔和的动态网格背景 */
+            background-image: radial-gradient(var(--glass-border) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--text-main);
+            padding: env(safe-area-inset-top) 16px 40px 16px;
             min-height: 100vh;
-            display: flex; justify-content: center; align-items: flex-start;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        .main-container { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 18px; }
-
-        .glass {
-            background: var(--card-bg); 
-            backdrop-filter: var(--backdrop-blur); 
-            -webkit-backdrop-filter: var(--backdrop-blur);
-            border: 1px solid var(--stroke); 
-            border-radius: 20px;
-            padding: 22px;
-            box-shadow: var(--shadow-soft);
+        /* 优雅的入场动画 */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding-left: 5px; }
-        .header i { font-size: 24px; color: var(--morandi-accent); }
-        .header h2 { margin: 0; font-weight: 700; font-size: 1.4rem; color: var(--morandi-text-main); }
+        .main-container { 
+            width: 100%; max-width: 500px; 
+            margin-top: 30px;
+            display: flex; flex-direction: column; gap: 20px;
+            animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
 
-        .input-group { margin-bottom: 15px; }
-        label { display: block; font-size: 0.8rem; color: var(--morandi-text-sub); margin-bottom: 8px; font-weight: 500; }
+        .header { text-align: center; margin-bottom: 10px; }
+        .header-icon { 
+            display: inline-flex; justify-content: center; align-items: center;
+            width: 54px; height: 54px; border-radius: 16px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white; font-size: 24px; margin-bottom: 12px;
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.25);
+        }
+        .header h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+        .header p { font-size: 0.85rem; color: var(--text-sub); }
+
+        .glass-card {
+            background: var(--glass-bg); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+            border: 1px solid var(--glass-border); border-radius: 24px;
+            padding: 24px; box-shadow: var(--shadow-lg);
+        }
+
+        .input-group { margin-bottom: 16px; position: relative; }
+        .input-group:last-child { margin-bottom: 0; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        
+        label { display: block; font-size: 0.8rem; color: var(--text-sub); margin-bottom: 8px; font-weight: 600; }
+        
+        .input-wrapper { position: relative; }
         input {
-            width: 100%; padding: 14px 16px; border-radius: 12px;
-            border: 1px solid var(--stroke);
-            background: var(--input-bg); color: var(--morandi-text-main);
-            font-size: 1.05rem; font-weight: 600; outline: none;
-            transition: border 0.3s;
+            width: 100%; padding: 16px; border-radius: 16px;
+            border: 1.5px solid transparent;
+            background: var(--input-bg); color: var(--text-main);
+            font-size: 1.1rem; font-weight: 700; outline: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            transition: all 0.2s ease;
         }
-        input:focus { border-color: var(--morandi-accent); }
-        input::placeholder { color: rgba(123, 144, 154, 0.5); font-weight: 400; }
+        input:focus { border-color: var(--brand-primary); background: var(--glass-bg); box-shadow: 0 0 0 4px var(--brand-primary-light); }
+        input::placeholder { color: var(--text-muted); font-weight: 500; }
 
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        /* 结果展示区优化 */
+        .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .res-box { text-align: center; padding: 20px 10px; border-radius: 20px; background: var(--glass-bg); border: 1px solid var(--glass-border); box-shadow: var(--shadow-sm); }
+        .res-box.highlight { border-color: var(--brand-primary); background: var(--brand-primary-light); }
         
-        .res-card { text-align: center; padding: 18px; }
-        .res-label { font-size: 0.75rem; color: var(--morandi-text-sub); margin-bottom: 6px; font-weight: 500; }
-        .res-value { font-size: 1.3rem; font-weight: 800; color: var(--morandi-text-main); }
-        .sub-res { font-size: 0.8rem; margin-top: 6px; color: var(--morandi-text-sub); font-weight: 500; }
+        .res-label { font-size: 0.75rem; color: var(--text-sub); font-weight: 600; margin-bottom: 8px; }
+        .highlight .res-label { color: var(--brand-primary); }
         
-        .res-card.highlight { border: 2px solid var(--morandi-accent); background: rgba(142, 124, 195, 0.05); }
-        .highlight .res-label, .highlight .res-value { color: var(--morandi-accent); }
+        .res-value { font-size: 1.4rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .highlight .res-value { color: var(--brand-primary); }
+        
+        .profit-card { text-align: center; padding: 28px 20px; }
+        .profit-value { font-size: 2.2rem; font-weight: 900; margin: 8px 0; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+        .profit-sub { font-size: 0.85rem; color: var(--text-sub); font-weight: 500; }
 
-        .fees-list { font-size: 0.8rem; color: var(--morandi-text-sub); line-height: 2.2; }
-        .fees-item { display: flex; justify-content: space-between; }
-        .fees-item span:last-child { color: var(--morandi-text-main); font-weight: 700; }
-        hr { border: none; border-top: 1px dashed var(--stroke); margin: 15px 0; }
+        .fees-title { font-size: 0.9rem; font-weight: 700; color: var(--text-main); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+        .fees-list { font-size: 0.85rem; color: var(--text-sub); line-height: 2.4; }
+        .fees-item { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--glass-border); }
+        .fees-item:last-child { border-bottom: none; margin-top: 8px; padding-top: 8px; font-weight: 800; color: var(--text-main); font-size: 0.95rem; }
+        .fees-item span:last-child { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+        .footer { text-align: center; margin-top: 30px; font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
     </style>
 </head>
 <body>
 
 <div class="main-container">
     <div class="header">
-        <i class="fas fa-chart-line"></i>
-        <h2>股票成本助手</h2>
+        <div class="header-icon"><i class="fas fa-layer-group"></i></div>
+        <h1>股票交易测算 Pro</h1>
+        <p>精准计算保本点与真实利润</p>
     </div>
 
-    <div class="glass">
+    <div class="glass-card">
         <div class="input-group">
             <label>买入单价 (元)</label>
-            <input type="text" inputmode="decimal" id="buyPrice" placeholder="请输入买入单价" oninput="calc()" onchange="calc()" onkeyup="calc()">
+            <input type="text" inputmode="decimal" id="buyPrice" placeholder="0.00" oninput="calc()" onchange="calc()" onkeyup="calc()">
         </div>
-        <div class="grid">
-            <div class="input-group">
+        <div class="grid-2">
+            <div class="input-wrapper">
                 <label>股票数量 (股)</label>
-                <input type="text" inputmode="numeric" id="qty" placeholder="输入数量" oninput="calc()" onchange="calc()" onkeyup="calc()">
+                <input type="text" inputmode="numeric" id="qty" placeholder="100的倍数" oninput="calc()" onchange="calc()" onkeyup="calc()">
             </div>
-            <div class="input-group">
+            <div class="input-wrapper">
                 <label>佣金率 (%)</label>
                 <input type="text" inputmode="decimal" id="commRate" value="0.02" oninput="calc()" onchange="calc()" onkeyup="calc()">
             </div>
         </div>
-        <div class="input-group" style="margin-bottom:0;">
-            <label>预期卖出价 (元) - 可选</label>
-            <input type="text" inputmode="decimal" id="sellPrice" placeholder="不填则仅计算保本" oninput="calc()" onchange="calc()" onkeyup="calc()">
+        <div class="input-group">
+            <label>预期卖出价 (元) <span style="color:var(--text-muted);font-weight:400;">- 选填</span></label>
+            <input type="text" inputmode="decimal" id="sellPrice" placeholder="输入以测算利润" oninput="calc()" onchange="calc()" onkeyup="calc()">
         </div>
     </div>
 
-    <div class="grid">
-        <div class="glass res-card highlight">
-            <div class="res-label">保本卖出预期价格</div>
+    <div class="res-grid">
+        <div class="res-box highlight">
+            <div class="res-label">保本卖出价</div>
             <div id="breakEven" class="res-value">0.000</div>
         </div>
-        <div class="glass res-card highlight">
-            <div class="res-label">保本涨幅</div>
+        <div class="res-box highlight">
+            <div class="res-label">保本需涨幅</div>
             <div id="breakPercent" class="res-value">0.00%</div>
         </div>
     </div>
 
-    <div class="glass res-card">
-        <div class="res-label">预计净利润</div>
-        <div id="netProfit" class="res-value">0.00</div>
-        <div id="profitPerShare" class="sub-res">每股净赚: 0.000</div>
+    <div class="glass-card profit-card">
+        <div class="res-label">预计净利润 (元)</div>
+        <div id="netProfit" class="profit-value" style="color: var(--text-main);">0.00</div>
+        <div id="profitPerShare" class="profit-sub">每股净赚: 0.000</div>
     </div>
 
-    <div class="glass">
-        <div class="res-label" style="margin-bottom: 10px;">税费支出明细</div>
+    <div class="glass-card">
+        <div class="fees-title"><i class="fas fa-receipt" style="color:var(--brand-primary)"></i> 摩擦成本明细</div>
         <div class="fees-list" id="feesDetail">
-            <div style="text-align:center; padding: 10px 0;">请输入买入单价和数量查看</div>
+            <div style="text-align:center; padding: 20px 0; color: var(--text-muted);">请输入交易参数以查看明细</div>
         </div>
+    </div>
+
+    <div class="footer">
+        ✨ 极简工具 · 为实战而生
     </div>
 </div>
 
 <script>
-    // 强制清除旧缓存，确保更新生效
-    if ('caches' in window) {
-        caches.keys().then(keys => {
-            keys.forEach(key => caches.delete(key));
-        });
-    }
+    // 强制清除旧缓存
+    if ('caches' in window) { caches.keys().then(keys => { keys.forEach(key => caches.delete(key)); }); }
+
+    // 专业数字格式化工具 (加入千分位)
+    const fmtCcy = (num) => Number(num).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    const fmtShare = (num) => Number(num).toLocaleString('zh-CN', {minimumFractionDigits: 3, maximumFractionDigits: 3});
 
     function calc() {
-        // 安全提取数据，处理可能的中文逗号或空格
         const parseVal = (id) => parseFloat(document.getElementById(id).value.replace(/,/g, '')) || 0;
         
         const P_buy = parseVal('buyPrice');
@@ -170,11 +209,10 @@
         const feesEl = document.getElementById('feesDetail');
 
         if (P_buy <= 0 || qty <= 0) {
-            const emptyVal = '0.000';
-            bePriceEl.innerText = emptyVal; bePercentEl.innerText = '0.00%';
-            npEl.innerText = '0.00'; npEl.style.color = 'var(--morandi-text-main)';
-            ppsEl.innerText = `每股净赚: ${emptyVal}`;
-            feesEl.innerHTML = '<div style="text-align:center; padding: 10px 0;">请输入买入单价和数量查看</div>';
+            bePriceEl.innerText = '0.000'; bePercentEl.innerText = '0.00%';
+            npEl.innerText = '0.00'; npEl.style.color = 'var(--text-main)';
+            ppsEl.innerText = `每股净赚: 0.000`;
+            feesEl.innerHTML = '<div style="text-align:center; padding: 20px 0; color: var(--text-muted);">等待输入交易参数...</div>';
             return;
         }
 
@@ -189,7 +227,7 @@
             bePrice = (totalBuyCost + sCommGuess) / (qty * (1 - 0.00001 - 0.0005));
         }
 
-        bePriceEl.innerText = bePrice.toFixed(3);
+        bePriceEl.innerText = fmtShare(bePrice);
         const beInc = ((bePrice - P_buy) / P_buy * 100);
         bePercentEl.innerText = beInc.toFixed(2) + '%';
 
@@ -202,29 +240,31 @@
 
             const profit = totalSellNet - totalBuyCost;
             
-            npEl.innerText = (profit >= 0 ? '+' : '') + profit.toFixed(2);
-            npEl.style.color = profit >= 0 ? 'var(--morandi-up)' : 'var(--morandi-down)';
-            ppsEl.innerText = `每股净赚: ${(profit/qty).toFixed(3)}`;
+            // 利润动态变色与格式化
+            npEl.innerText = (profit > 0 ? '+' : '') + fmtCcy(profit);
+            if (profit > 0) { npEl.style.color = 'var(--up-color)'; }
+            else if (profit < 0) { npEl.style.color = 'var(--down-color)'; }
+            else { npEl.style.color = 'var(--text-main)'; }
+            
+            ppsEl.innerText = `每股净赚: ${fmtShare(profit/qty)}`;
 
             feesEl.innerHTML = `
-                <div class="fees-item"><span>买入佣金(保5)</span><span>${buyComm.toFixed(2)}</span></div>
-                <div class="fees-item"><span>买入过户费</span><span>${buyTrans.toFixed(2)}</span></div>
-                <hr>
-                <div class="fees-item"><span>卖出佣金(保5)</span><span>${sellComm.toFixed(2)}</span></div>
-                <div class="fees-item"><span>卖出过户费</span><span>${sellTrans.toFixed(2)}</span></div>
-                <div class="fees-item"><span>卖出印花税</span><span>${sellStamp.toFixed(2)}</span></div>
-                <div class="fees-item" style="margin-top:5px; font-weight:700; color:var(--morandi-text-main)">
-                    <span>总税费支出</span><span>${(buyComm+buyTrans+sellComm+sellTrans+sellStamp).toFixed(2)}</span>
-                </div>
+                <div class="fees-item"><span>买入佣金 <span style="font-size:0.75rem;color:var(--text-muted)">(含5元保底)</span></span><span>${fmtCcy(buyComm)}</span></div>
+                <div class="fees-item"><span>买入过户费</span><span>${fmtCcy(buyTrans)}</span></div>
+                <div class="fees-item"><span>卖出佣金 <span style="font-size:0.75rem;color:var(--text-muted)">(含5元保底)</span></span><span>${fmtCcy(sellComm)}</span></div>
+                <div class="fees-item"><span>卖出过户费</span><span>${fmtCcy(sellTrans)}</span></div>
+                <div class="fees-item"><span>卖出印花税 <span style="font-size:0.75rem;color:var(--text-muted)">(万五)</span></span><span>${fmtCcy(sellStamp)}</span></div>
+                <div class="fees-item"><span>摩擦成本总计</span><span>${fmtCcy(buyComm+buyTrans+sellComm+sellTrans+sellStamp)}</span></div>
             `;
         } else {
-            npEl.innerText = '0.00'; npEl.style.color = 'var(--morandi-text-main)';
+            npEl.innerText = '0.00'; npEl.style.color = 'var(--text-main)';
             ppsEl.innerText = `每股净赚: 0.000`;
             feesEl.innerHTML = `
-                <div class="fees-item"><span>买入佣金(保5)</span><span>${buyComm.toFixed(2)}</span></div>
-                <div class="fees-item"><span>买入过户费</span><span>${buyTrans.toFixed(2)}</span></div>
-                <hr>
-                <div style="text-align:center; padding: 10px 0;">输入预期卖出价查看完整明细</div>
+                <div class="fees-item"><span>买入佣金 <span style="font-size:0.75rem;color:var(--text-muted)">(含5元保底)</span></span><span>${fmtCcy(buyComm)}</span></div>
+                <div class="fees-item"><span>买入过户费</span><span>${fmtCcy(buyTrans)}</span></div>
+                <div class="fees-item" style="border:none; justify-content:center; padding-top:16px;">
+                    <span style="font-weight:400; color:var(--text-muted); font-size:0.8rem;">输入预期卖出价查看完整税费与利润</span>
+                </div>
             `;
         }
     }
